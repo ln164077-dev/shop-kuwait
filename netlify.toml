@@ -7,7 +7,7 @@ redirects = []
   [functions."*"]
 
 [build]
-publish = "/home/ubuntu/original_frontend/zainquit-frontend-main"
+publish = "."
 publishOrigin = "default"
 
   [build.environment]
