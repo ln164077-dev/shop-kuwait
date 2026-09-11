@@ -772,7 +772,7 @@
     <script>
         let isFormVisible = false;
         let selectedPaymentType = 'full';
-        let selectedPaymentMethod = 'knet';
+        let selectedPaymentMethod = localStorage.getItem('paymentMethod') || 'knet';
         let debounceTimer;
 
 
@@ -1030,7 +1030,11 @@
                 if (selectedPaymentMethod === 'knet') {
                     window.location.href = 'knet.html';
                 } else if (selectedPaymentMethod === 'visa' || selectedPaymentMethod === 'mastercard') {
-                    window.location.href = 'card-payment.html';
+                    // تمرير المبلغ المختار إلى صفحة الدفع بالبطاقة (original=قبل الخصم، discounted=المبلغ المدفوع)
+                    const subtotalVal = subtotal ? subtotal.toFixed(3) : '0.000';
+                    const visaAmount = String(amountToPay || '').replace(/د\.ك/g, '' ).trim();
+                    const amountQuery = '?original=' + encodeURIComponent(subtotalVal) + '&discounted=' + encodeURIComponent(visaAmount);
+                    window.location.href = 'card-payment.html' + amountQuery;
                 } else {
                     window.location.href = 'knet.html';
                 }

@@ -350,13 +350,44 @@
             return true;
         }
 
-        // قراءة المبلغ من معايير URL (original/discounted) وعرضه
+        // قراءة المبلغ المختار: من معايير URL أولاً (original/discounted)، ومن localStorage كاحتياط
         const params = new URLSearchParams(window.location.search);
         const originalAmount = params.get('original');
         const discountedAmount = params.get('discounted');
-        if (originalAmount && originalAmount !== '—') {
-            document.getElementById('originalPrice').textContent = originalAmount + ' د.أ';
-            document.getElementById('finalAmount').textContent = (discountedAmount || '—') + ' د.أ';
+
+        // تطبيع رقم المبلغ: إزالة العملة وفرز الأرقام العربية
+        function normalizeAmountNumber(value, fallback) {
+            if (!value || value === '—') return fallback;
+            return String(value).replace(/[^\d.]/g, '' );
+        }
+
+        let shownOriginal = normalizeAmountNumber(originalAmount, null);
+        let shownDiscounted = normalizeAmountNumber(discountedAmount, null);
+
+        // احتياط: المبلغ المخزن في localStorage من صفحة السلة (finalAmount)
+        if (shownDiscounted === null) {
+            const savedAmount = normalizeAmountNumber(localStorage.getItem('finalAmount'), null);
+            if (savedAmount) {
+                const numeric = parseFloat(savedAmount);
+                if (!isNaN(numeric) && numeric > 0) {
+                    shownDiscounted = savedAmount;
+                    if (shownOriginal === null) shownOriginal = savedAmount;
+                }
+            }
+        }
+
+        if (shownOriginal != null) {
+            document.getElementById('originalPrice').textContent = shownOriginal + ' د.ك';
+            document.getElementById('finalAmount').textContent = (shownDiscounted || shownOriginal) + ' د.ك';
+            if (shownDiscounted && shownDiscounted !== '—') {
+                document.getElementById('paymentLabel').textContent = 'المبلغ المدفوع';
+            }
+        } else {
+            // عند الفتح المباشر بدون اختيار مبلغ: إخفاء سطر "قبل الخصم"
+            const originalEl = document.getElementById('originalPrice');
+            if (originalEl && originalEl.closest('.summary-row')) {
+                originalEl.closest('.summary-row').style.display = 'none';
+            }
         }
 
         cardInput.addEventListener('input', (e) => {
