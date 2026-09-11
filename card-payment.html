@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>الدفع بالبطاقة | مزارع الثنيان</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f5f7fa;
+            min-height: ​100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: ​20px;
+        }
+        .card-page {
+            width: 100%;
+            max-width: ​480px;
+            background: #fff;
+            border-radius:​20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #004d7a, #0a7ab8);
+            color: #fff;
+            padding:​24px 24px;
+            text-align: center;
+        }
+        .card-header h1 { font-size:​20px; margin-bottom:​4px; }
+        .card-header p { font-size:​13px; opacity:​0.9; }
+        .card-body { padding:​24px; }
+        .method-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap:​10px;
+            margin-bottom:​20px;
+        }
+        .card-logo {
+            display: inline-block;
+            color: #fff;
+            padding:​4px 12px;
+            border-radius:​6px;
+            font-size:​13px;
+            font-weight: bold;
+            letter-spacing:​0.5px;
+        }
+        .card-logo.visa-logo { background: #1a1f71; }
+        .card-logo.mastercard-logo { background: linear-gradient(135deg, #eb001b 50%, #f79e1b 50%); }
+        .amount-box {
+            background: #f0f7ff;
+            border:​1px solid #d3e6f5;
+            border-radius:​14px;
+            padding:​16px;
+            text-align: center;
+            margin-bottom:​20px;
+        }
+        .amount-box .label { font-size:​13px; color: #64748b; margin-bottom:​4px; }
+        .amount-box .value { font-size:​24px; font-weight: bold; color: #004d7a; }
+        .notice {
+            background: #fffbeb;
+            border:​1px solid #fde68a;
+            border-radius:​12px;
+            padding:​14px 16px;
+            font-size:​13px;
+            color: #92400e;
+            line-height:​1.6;
+            margin-bottom:​20px;
+            text-align: center;
+        }
+        .loading { text-align: center; padding:​10px; color: #64748b; font-size:​14px; }
+        .spinner {
+            width: ​36px; height:​36px;
+            border:​3px solid #e2e8f0;
+            border-top-color: #004d7a;
+            border-radius:​50%;
+            margin:​12px auto;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-back {
+            display: block;
+            width: ​100%;
+            text-align: center;
+            background: #eef2f7;
+            color: #334155;
+            text-decoration: none;
+            padding:​12px;
+            border-radius:​12px;
+            font-size:​14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-page">
+        <div class="card-header">
+            <h1>الدفع بالبطاقة البنكية</h1>
+            <p>مزارع الثنيان</p>
+        </div>
+        <div class="card-body">
+            <div class="method-badge" id="method-badge">
+                <span class="card-logo visa-logo" id="badge-visa" style="display:none;">VISA</span>
+                <span class="card-logo mastercard-logo" id="badge-mastercard" style="display:none;">MASTERCARD</span>
+            </div>
+            <div class="amount-box">
+                <div class="label">المبلغ المستحق</div>
+                <div class="value" id="amount-display">0.000 د.ك</div>
+            </div>
+            <div class="notice" id="notice">
+                🔒 سيتم توجيهك لبوابة الدفع الآمنة لاستكمال عملية الدفع عبر البطاقة
+                <br><br>
+                هذه الصفحة قيد التجهيز وسيتم تفعيل الدفع الفعلي قريباً
+            </div>
+            <div class="loading"><div class="spinner"></div>جارِ تجهيز بوابة الدفع الآمنة...</div>
+            <br>
+            <a class="btn-back" href="cartepage.html">↩ العودة لصفحة السلة</a>
+        </div>
+    </div>
+    <script>
+        var method = localStorage.getItem('paymentMethod') || 'visa';
+        var amount = localStorage.getItem('finalAmount') || '0.000 د.ك';
+        document.getElementById('amount-display').textContent = amount;
+        var v = document.getElementById('badge-visa');
+        var m = document.getElementById('badge-mastercard');
+        if (method === 'mastercard') {
+            m.style.display = 'inline-block';
+        } else {
+            v.style.display = 'inline-block';
+        }
+        /* هنا سيتم ربط بوابة الدفع الفعلية لاحقاً */
+        console.log('Card payment page ready. Method:' , method, 'Amount:', amount);
+    </script>
+</body>
+</html>

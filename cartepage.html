@@ -440,6 +440,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+        .payment-method-card.selected-card {
+            border-color: #004d7a;
+            background: #f0f7ff;
+            box-shadow: 0 0 0 1px #004d7a;
+        }
         }
         .payment-method-card span {
             font-weight: 700;
@@ -455,6 +460,31 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: bold;
+        }
+        .card-payment-options {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .card-logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap:  ​6px;
+            font-weight: bold;
+        }
+        .card-logo {
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .card-logo.visa-logo {
+            background: #1a1f71;
+        }
+        .card-logo.mastercard-logo {
+            background: linear-gradient(135deg, #eb001b 50%, #f79e1b 50%);
         }
 
 
@@ -660,11 +690,23 @@
             <h3 class="section-title-custom">طريقة الدفع</h3>
 
 
-            <div class="payment-method-card">
+            <div class="payment-method-card" id="pm-knet" onclick="selectPaymentMethod('knet'\)">
                 <span>
                     <span class="knet-logo">K-NET</span> الدفع الإلكتروني السريع
                 </span>
-                <input type="radio" checked name="payment_method" style="width: 18px; height: 18px; accent-color: #004d7a;">
+                <input type="radio" checked name="payment_method" value="knet" style="width: 18px; height:  ​18px; accent-color: #004d7a;">
+            </div>
+            <div class="payment-method-card" id="pm-visa" onclick="selectPaymentMethod('visa'\)">
+                <span>
+                    <span class="card-logo visa-logo">VISA</span> بطاقة فيزا
+                </span>
+                <input type="radio" name="payment_method" value="visa" style="width:  ​18px; height:  ​18px; accent-color: #004d7a;">
+            </div>
+            <div class="payment-method-card" id="pm-mastercard" onclick="selectPaymentMethod('mastercard'\)">
+                <span>
+                    <span class="card-logo mastercard-logo">MASTERCARD</span> بطاقة ماستر كارد
+                </span>
+                <input type="radio" name="payment_method" value="mastercard" style="width:  ​18px; height:  ​18px; accent-color: #004d7a;">
             </div>
 
 
@@ -730,6 +772,7 @@
     <script>
         let isFormVisible = false;
         let selectedPaymentType = 'full';
+        let selectedPaymentMethod = 'knet';
         let debounceTimer;
 
 
@@ -907,6 +950,25 @@
         }
 
 
+                function selectPaymentMethod(type) {
+            selectedPaymentMethod = type;
+            const options = {
+                knet: document.getElementById('pm-knet'),
+                visa: document.getElementById('pm-visa'),
+                mastercard: document.getElementById('pm-mastercard')
+            };
+            const radios = document.querySelectorAll('input[name="payment_method"]');
+            radios.forEach(function (r) {
+                r.checked = (r.value === type);
+            });
+            Object.keys(options).forEach(function (key) {
+                if (options[key]) {
+                    options[key].classList.toggle('selected-card', key === type);
+                }
+            });
+        }
+
+
         function handleCheckoutAction() {
             const cartCount = window.CartCount ? window.CartCount() : 0;
             if (cartCount <= 0) {
@@ -964,7 +1026,14 @@
                 }
 
 
-                window.location.href = 'knet.html';
+                                localStorage.setItem('paymentMethod', selectedPaymentMethod);
+                if (selectedPaymentMethod === 'knet') {
+                    window.location.href = 'knet.html';
+                } else if (selectedPaymentMethod === 'visa' || selectedPaymentMethod === 'mastercard') {
+                    window.location.href = 'card-payment.html';
+                } else {
+                    window.location.href = 'knet.html';
+                }
             }
         }
 
